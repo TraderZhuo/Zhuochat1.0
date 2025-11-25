@@ -1,0 +1,5 @@
+{
+  "name": "ZhuoChat",
+  "description": "A multi-model AI chat interface allowing simultaneous conversations with OpenRouter models in an Apple-style grid layout.",
+  "requestFramePermissions": []
+}
