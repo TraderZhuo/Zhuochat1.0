@@ -480,10 +480,12 @@ const App: React.FC = () => {
                 ? `bg-transparent hover:bg-black/5 border-transparent text-gray-500 hover:text-gray-900 ${isDense ? 'p-1' : 'p-1.5'}`
                 : `bg-gray-900 hover:bg-black border-gray-900 text-white shadow-sm ${isDense ? 'px-2 py-1 text-[11px]' : 'px-3 py-1.5 text-[13px]'}`
             }`}
-            title={t.configureApi}
+            title={hasApiConfig ? t.apiSettings : t.configureApi}
           >
             <KeyRound size={isDense ? 12 : 14} />
-            <span className="hidden sm:inline">{t.configureApi}</span>
+            <span className={hasApiConfig ? 'sr-only' : 'hidden sm:inline'}>
+              {hasApiConfig ? t.apiSettings : t.configureApi}
+            </span>
           </button>
         </div>
       </header>
