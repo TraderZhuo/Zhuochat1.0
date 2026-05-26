@@ -29,7 +29,7 @@ import KwaipilotIcon from '@lobehub/icons/es/Kwaipilot/components/Mono';
 import LiquidIcon from '@lobehub/icons/es/Liquid/components/Mono';
 import MetaIcon from '@lobehub/icons/es/Meta/components/Mono';
 import MicrosoftIcon from '@lobehub/icons/es/Microsoft/components/Mono';
-import MiniMaxIcon from '@lobehub/icons/es/MiniMax/components/Mono';
+import MiniMaxIcon from '@lobehub/icons/es/Minimax/components/Mono';
 import MistralIcon from '@lobehub/icons/es/Mistral/components/Mono';
 import MoonshotIcon from '@lobehub/icons/es/Moonshot/components/Mono';
 import MorphIcon from '@lobehub/icons/es/Morph/components/Mono';
