@@ -127,7 +127,6 @@ const App: React.FC = () => {
       baseUrl: savedBaseUrl || DEFAULT_BASE_URL,
       language: savedLang
     }));
-    setShowConfigModal(!(savedApiKey && savedBaseUrl));
   }, []);
 
   const handleToggleFavorite = useCallback((modelId: string) => {
