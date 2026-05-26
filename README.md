@@ -1,20 +1,58 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ZhuoChat
 
-# Run and deploy your AI Studio app
+ZhuoChat is a Vite + React multi-model chat workspace. It lets you compare responses across 1, 2, 3, 4, or 6 chat windows using an OpenAI-compatible API endpoint.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1cilLf8MOCLJhme_R5kMzpGx4L0QxhhQ-
+- Multi-window AI chat comparison
+- OpenAI-compatible API configuration in the browser
+- Model discovery from `/models` with provider-specific fallback models
+- Custom model ID entry
+- Markdown message rendering
+- Attachment-aware prompts
+- CSV export for all conversations
+- Chinese and English interface switching
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisite:** Node.js 18 or later.
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+3. Open the local URL shown by Vite, usually:
+
+   ```text
+   http://127.0.0.1:5173/
+   ```
+
+4. In the app, open API settings and enter:
+
+   - Base URL, for example `https://openrouter.ai/api/v1`
+   - API key from your provider
+
+The API key is stored only in local browser storage. Do not commit API keys to the repository.
+
+## Build
+
+```bash
+npm run build
+```
+
+## Supported API Shape
+
+The app expects OpenAI-compatible endpoints:
+
+- `GET /models`
+- `POST /chat/completions` with streaming responses
+
+It can be used with OpenRouter and other OpenAI-compatible providers when they support those endpoints.

@@ -34,3 +34,28 @@ body {
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.15);
 }
+
+.model-list-scrollbar {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(31, 41, 55, 0.28) rgba(229, 231, 235, 0.65);
+}
+
+.model-list-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.model-list-scrollbar::-webkit-scrollbar-track {
+  background: rgba(229, 231, 235, 0.65);
+  border-radius: 999px;
+}
+
+.model-list-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(31, 41, 55, 0.28);
+  border: 2px solid rgba(229, 231, 235, 0.65);
+  border-radius: 999px;
+}
+
+.model-list-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(31, 41, 55, 0.42);
+}

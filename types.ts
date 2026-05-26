@@ -63,6 +63,58 @@ export const DEFAULT_MODELS = [
 
 export const DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
 
+export const getDefaultModelsForBaseUrl = (baseUrl: string): OpenRouterModel[] => {
+  const url = (baseUrl || '').toLowerCase();
+
+  if (url.includes('openrouter.ai')) return DEFAULT_MODELS;
+
+  if (url.includes('deepseek')) {
+    return [
+      { id: 'deepseek-chat', name: 'DeepSeek Chat' },
+      { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner' }
+    ];
+  }
+
+  if (url.includes('api.openai.com') || url.includes('openai.azure.com')) {
+    return [
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+      { id: 'gpt-4o', name: 'GPT-4o' }
+    ];
+  }
+
+  if (url.includes('moonshot') || url.includes('kimi')) {
+    return [
+      { id: 'moonshot-v1-8k', name: 'Moonshot v1 8K' },
+      { id: 'moonshot-v1-32k', name: 'Moonshot v1 32K' }
+    ];
+  }
+
+  if (url.includes('dashscope') || url.includes('aliyun')) {
+    return [
+      { id: 'qwen-plus', name: 'Qwen Plus' },
+      { id: 'qwen-turbo', name: 'Qwen Turbo' }
+    ];
+  }
+
+  if (url.includes('siliconflow')) {
+    return [
+      { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek V3' },
+      { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5 72B Instruct' }
+    ];
+  }
+
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    return [
+      { id: 'llama3.1', name: 'llama3.1' },
+      { id: 'qwen2.5', name: 'qwen2.5' }
+    ];
+  }
+
+  return [
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }
+  ];
+};
+
 // Helper to estimate tokens (rough approximation: 1 token ~= 4 chars)
 export const estimateTokens = (text: string): number => Math.ceil(text.length / 4);
 
@@ -70,25 +122,36 @@ export const TRANSLATIONS = {
   zh: {
     welcomeTitle: "ZhuoChat",
     welcomeSubtitle: "输入您的 API 密钥以开始体验多模型并行对话。",
+    apiModalTitle: "连接模型服务",
+    apiModalSubtitle: "配置兼容 OpenAI 的接口地址和 API Key。",
     apiEndpoint: "接口地址",
     apiKey: "API 密钥",
     startChat: "开始对话",
+    saveApiSettings: "保存并连接",
+    connectApiHint: "连接 API 后即可发送消息。",
     localStorageHint: "您的密钥仅存储在本地浏览器中。",
     exportAll: "导出所有对话表格",
     logout: "退出登录",
+    apiSettings: "API 设置",
+    configureApi: "连接 API",
     windowCount: "窗口布局",
-    sendToAllPlaceholder: "iMessage...",
+    sendToAllPlaceholder: "同时询问所有窗口...",
+    sendToAllLabel: "发送给全部",
     sendToAll: "发送",
     clearChat: "清空",
     exportChat: "导出当前对话",
-    typeMessage: "iMessage...",
+    typeMessage: "问这个模型...",
     selectModel: "选择模型",
+    windowLabel: "窗口",
+    modelSheetTitle: "选择模型",
+    emptyTitle: "准备对比回答",
     loading: "加载中...",
     modelLoading: "模型列表更新中...",
     noApiKey: "请先配置 API Key",
     defaultError: "发生错误",
     searchModel: "搜索模型 (例如: gpt, claude...)",
     noModelFound: "未找到相关模型",
+    useCustomModel: "使用这个模型 ID",
     popular: "热门模型",
     favorites: "已收藏",
     allModels: "所有模型",
@@ -114,25 +177,36 @@ export const TRANSLATIONS = {
   en: {
     welcomeTitle: "ZhuoChat",
     welcomeSubtitle: "Enter your credentials to start parallel model chatting.",
+    apiModalTitle: "Connect model service",
+    apiModalSubtitle: "Configure an OpenAI-compatible endpoint and API key.",
     apiEndpoint: "API Endpoint",
     apiKey: "API Key",
     startChat: "Start Chatting",
+    saveApiSettings: "Save and Connect",
+    connectApiHint: "Connect an API before sending messages.",
     localStorageHint: "Your keys are stored locally in your browser.",
     exportAll: "Export All CSV",
     logout: "Log Out",
+    apiSettings: "API Settings",
+    configureApi: "Connect API",
     windowCount: "Layout",
-    sendToAllPlaceholder: "iMessage...",
+    sendToAllPlaceholder: "Ask every window...",
+    sendToAllLabel: "All windows",
     sendToAll: "Send",
     clearChat: "Clear",
     exportChat: "Export Chat",
-    typeMessage: "iMessage...",
+    typeMessage: "Ask this model...",
     selectModel: "Select Model",
+    windowLabel: "Window",
+    modelSheetTitle: "Choose model",
+    emptyTitle: "Ready for a comparison",
     loading: "Loading...",
     modelLoading: "Loading models...",
     noApiKey: "API Key required",
     defaultError: "Error occurred",
     searchModel: "Search models (e.g., gpt, claude...)",
     noModelFound: "No models found",
+    useCustomModel: "Use this model ID",
     popular: "Popular Models",
     favorites: "Favorites",
     allModels: "All Models",

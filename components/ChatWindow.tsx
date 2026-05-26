@@ -1,8 +1,58 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { Trash2, Download, Bot, SlidersHorizontal, Copy, RefreshCw, Pencil, X, Paperclip, FileText, ArrowUp, ChevronDown, Search, Check, Code, Zap, Star, Sparkles, Tag } from 'lucide-react';
-import { ChatWindowData, OpenRouterModel, DEFAULT_MODELS, TRANSLATIONS, Attachment } from '../types';
+import Ai21Icon from '@lobehub/icons/es/Ai21/components/Mono';
+import AionLabsIcon from '@lobehub/icons/es/AionLabs/components/Mono';
+import AlephAlphaIcon from '@lobehub/icons/es/AlephAlpha/components/Mono';
+import AnthropicIcon from '@lobehub/icons/es/Claude/components/Mono';
+import ArceeIcon from '@lobehub/icons/es/Arcee/components/Mono';
+import BaiduIcon from '@lobehub/icons/es/Baidu/components/Mono';
+import BaichuanIcon from '@lobehub/icons/es/Baichuan/components/Mono';
+import BedrockIcon from '@lobehub/icons/es/Bedrock/components/Mono';
+import ByteDanceIcon from '@lobehub/icons/es/ByteDance/components/Mono';
+import CloudflareIcon from '@lobehub/icons/es/Cloudflare/components/Mono';
+import CohereIcon from '@lobehub/icons/es/Cohere/components/Mono';
+import DeepSeekIcon from '@lobehub/icons/es/DeepSeek/components/Mono';
+import DeepCogitoIcon from '@lobehub/icons/es/DeepCogito/components/Mono';
+import EssentialAIIcon from '@lobehub/icons/es/EssentialAI/components/Mono';
+import GeminiIcon from '@lobehub/icons/es/Gemini/components/Mono';
+import GroqIcon from '@lobehub/icons/es/Groq/components/Mono';
+import HuggingFaceIcon from '@lobehub/icons/es/HuggingFace/components/Mono';
+import HunyuanIcon from '@lobehub/icons/es/Hunyuan/components/Mono';
+import IBMIcon from '@lobehub/icons/es/IBM/components/Mono';
+import InflectionIcon from '@lobehub/icons/es/Inflection/components/Mono';
+import InceptionIcon from '@lobehub/icons/es/Inception/components/Mono';
+import KimiIcon from '@lobehub/icons/es/Kimi/components/Mono';
+import KwaipilotIcon from '@lobehub/icons/es/Kwaipilot/components/Mono';
+import LiquidIcon from '@lobehub/icons/es/Liquid/components/Mono';
+import MetaIcon from '@lobehub/icons/es/Meta/components/Mono';
+import MicrosoftIcon from '@lobehub/icons/es/Microsoft/components/Mono';
+import MiniMaxIcon from '@lobehub/icons/es/MiniMax/components/Mono';
+import MistralIcon from '@lobehub/icons/es/Mistral/components/Mono';
+import MoonshotIcon from '@lobehub/icons/es/Moonshot/components/Mono';
+import MorphIcon from '@lobehub/icons/es/Morph/components/Mono';
+import NvidiaIcon from '@lobehub/icons/es/Nvidia/components/Mono';
+import NousResearchIcon from '@lobehub/icons/es/NousResearch/components/Mono';
+import OpenAIIcon from '@lobehub/icons/es/OpenAI/components/Mono';
+import OpenRouterIcon from '@lobehub/icons/es/OpenRouter/components/Mono';
+import PerplexityIcon from '@lobehub/icons/es/Perplexity/components/Mono';
+import QwenIcon from '@lobehub/icons/es/Qwen/components/Mono';
+import RelaceIcon from '@lobehub/icons/es/Relace/components/Mono';
+import StepfunIcon from '@lobehub/icons/es/Stepfun/components/Mono';
+import TencentIcon from '@lobehub/icons/es/Tencent/components/Mono';
+import UpstageIcon from '@lobehub/icons/es/Upstage/components/Mono';
+import VoyageIcon from '@lobehub/icons/es/Voyage/components/Mono';
+import VolcengineIcon from '@lobehub/icons/es/Volcengine/components/Mono';
+import WorkersAIIcon from '@lobehub/icons/es/WorkersAI/components/Mono';
+import XAIIcon from '@lobehub/icons/es/XAI/components/Mono';
+import XiaomiMiMoIcon from '@lobehub/icons/es/XiaomiMiMo/components/Mono';
+import YandexIcon from '@lobehub/icons/es/Yandex/components/Mono';
+import YiIcon from '@lobehub/icons/es/Yi/components/Mono';
+import ZAIIcon from '@lobehub/icons/es/ZAI/components/Mono';
+import ZeroOneIcon from '@lobehub/icons/es/ZeroOne/components/Mono';
+import { ChatWindowData, OpenRouterModel, TRANSLATIONS, Attachment } from '../types';
 
 interface ChatWindowProps {
   data: ChatWindowData;
@@ -16,49 +66,117 @@ interface ChatWindowProps {
   onRegenerate: (id: string, messageId: string) => void;
   lang: 'zh' | 'en';
   isDense?: boolean;
+  isApiConnected?: boolean;
   favoriteModels?: string[];
   onToggleFavorite?: (modelId: string) => void;
 }
 
-// --- Apple-Style Adaptive Icon Logic ---
+// --- Vendor Icon Logic ---
 
-interface VendorStyle {
-  bg: string;
-  text: string;
+type BrandIcon = React.ComponentType<any>;
+
+interface VendorIconSpec {
+  Icon?: BrandIcon;
+  color: string;
   label: string;
-  gradient: string;
+  name: string;
 }
 
-const getVendorStyle = (modelId: string): VendorStyle => {
+const fallbackVendor: VendorIconSpec = {
+  color: '#6B7280',
+  label: 'AI',
+  name: 'AI Model',
+};
+
+const getVendorIconSpec = (modelId: string): VendorIconSpec => {
   const id = (modelId || '').toLowerCase();
+  const vendor = id.split('/')[0].replace(/^~/, '');
   
-  if (id.startsWith('openai')) return { bg: 'bg-black', text: 'text-white', label: 'GPT', gradient: 'from-gray-800 to-black' };
-  if (id.startsWith('anthropic')) return { bg: 'bg-[#D97757]', text: 'text-white', label: 'Claude', gradient: 'from-[#E88C6F] to-[#C45A38]' };
-  if (id.startsWith('google')) return { bg: 'bg-[#4285F4]', text: 'text-white', label: 'Gemini', gradient: 'from-[#5FA0FA] to-[#2B6AD0]' };
-  if (id.startsWith('meta') || id.includes('llama')) return { bg: 'bg-[#0668E1]', text: 'text-white', label: 'Llama', gradient: 'from-[#3489F7] to-[#0050B3]' };
-  if (id.startsWith('mistral')) return { bg: 'bg-[#5433FF]', text: 'text-white', label: 'Mistral', gradient: 'from-[#7052FF] to-[#3B1CC6]' };
-  if (id.startsWith('x-ai')) return { bg: 'bg-black', text: 'text-white', label: 'X', gradient: 'from-gray-900 to-black' };
-  if (id.startsWith('perplexity')) return { bg: 'bg-[#22B8CD]', text: 'text-white', label: 'PPLX', gradient: 'from-[#3FD2E5] to-[#1291A3]' };
-  if (id.startsWith('deepseek')) return { bg: 'bg-[#4D6BFE]', text: 'text-white', label: 'DeepSeek', gradient: 'from-[#6580FF] to-[#304BDB]' };
-  if (id.startsWith('qwen') || id.includes('alibaba')) return { bg: 'bg-[#615CED]', text: 'text-white', label: 'Qwen', gradient: 'from-[#7B76F5] to-[#4A45C9]' };
-  if (id.startsWith('minimax')) return { bg: 'bg-[#FF4F4F]', text: 'text-white', label: 'MiniMax', gradient: 'from-[#FF7070] to-[#D92B2B]' };
-  if (id.startsWith('microsoft') || id.includes('wizard')) return { bg: 'bg-[#00A4EF]', text: 'text-white', label: 'Msft', gradient: 'from-[#33BCF7] to-[#008AC9]' };
-  if (id.startsWith('nvidia')) return { bg: 'bg-[#76B900]', text: 'text-white', label: 'Nvidia', gradient: 'from-[#91D921] to-[#5C9100]' };
-  
-  return { bg: 'bg-gray-500', text: 'text-white', label: 'AI', gradient: 'from-gray-400 to-gray-600' };
+  if (vendor === 'openai') return { Icon: OpenAIIcon, color: '#0F172A', label: 'OpenAI', name: 'OpenAI' };
+  if (vendor === 'anthropic') return { Icon: AnthropicIcon, color: '#D97757', label: 'Claude', name: 'Claude' };
+  if (vendor === 'google' || id.includes('gemini') || id.includes('gemma')) return { Icon: GeminiIcon, color: '#4285F4', label: 'Gemini', name: 'Google Gemini' };
+  if (vendor === 'meta-llama' || id.includes('llama')) return { Icon: MetaIcon, color: '#0668E1', label: 'Meta', name: 'Meta' };
+  if (vendor === 'mistralai' || vendor === 'mistral') return { Icon: MistralIcon, color: '#FA520F', label: 'Mistral', name: 'Mistral AI' };
+  if (vendor === 'deepseek') return { Icon: DeepSeekIcon, color: '#4D6BFE', label: 'DeepSeek', name: 'DeepSeek' };
+  if (vendor === 'qwen' || id.includes('alibaba')) return { Icon: QwenIcon, color: '#615CED', label: 'Qwen', name: 'Qwen' };
+  if (vendor === 'minimax') return { Icon: MiniMaxIcon, color: '#FF4F4F', label: 'MiniMax', name: 'MiniMax' };
+  if (vendor === 'x-ai') return { Icon: XAIIcon, color: '#111827', label: 'xAI', name: 'xAI' };
+  if (vendor === 'perplexity') return { Icon: PerplexityIcon, color: '#22B8CD', label: 'PPLX', name: 'Perplexity' };
+  if (vendor === 'nvidia') return { Icon: NvidiaIcon, color: '#76B900', label: 'NVIDIA', name: 'NVIDIA' };
+  if (vendor === 'openrouter') return { Icon: OpenRouterIcon, color: '#111827', label: 'OpenRouter', name: 'OpenRouter' };
+  if (vendor === 'z-ai') return { Icon: ZAIIcon, color: '#111827', label: 'Z.ai', name: 'Z.ai' };
+  if (vendor === 'moonshotai') return id.includes('kimi')
+    ? { Icon: KimiIcon, color: '#111827', label: 'Kimi', name: 'Kimi' }
+    : { Icon: MoonshotIcon, color: '#111827', label: 'Moonshot', name: 'Moonshot AI' };
+  if (vendor === 'baidu') return { Icon: BaiduIcon, color: '#2932E1', label: 'Baidu', name: 'Baidu' };
+  if (vendor === 'bytedance-seed' || vendor === 'bytedance') return { Icon: ByteDanceIcon, color: '#111827', label: 'ByteDance', name: 'ByteDance' };
+  if (vendor === 'cohere') return { Icon: CohereIcon, color: '#39594D', label: 'Cohere', name: 'Cohere' };
+  if (vendor === 'microsoft') return { Icon: MicrosoftIcon, color: '#00A4EF', label: 'Microsoft', name: 'Microsoft' };
+  if (vendor === 'amazon') return { Icon: BedrockIcon, color: '#FF9900', label: 'Bedrock', name: 'Amazon Bedrock' };
+  if (vendor === 'tencent') return id.includes('hunyuan')
+    ? { Icon: HunyuanIcon, color: '#0052D9', label: 'Hunyuan', name: 'Hunyuan' }
+    : { Icon: TencentIcon, color: '#0052D9', label: 'Tencent', name: 'Tencent' };
+  if (vendor === 'ibm-granite') return { Icon: IBMIcon, color: '#0F62FE', label: 'IBM', name: 'IBM' };
+  if (vendor === 'xiaomi') return { Icon: XiaomiMiMoIcon, color: '#FF6900', label: 'MiMo', name: 'Xiaomi MiMo' };
+  if (vendor === 'ai21') return { Icon: Ai21Icon, color: '#111827', label: 'AI21', name: 'AI21' };
+  if (vendor === 'aion-labs') return { Icon: AionLabsIcon, color: '#6D5DFC', label: 'Aion', name: 'Aion Labs' };
+  if (vendor === 'arcee-ai') return { Icon: ArceeIcon, color: '#4F46E5', label: 'Arcee', name: 'Arcee' };
+  if (vendor === 'nousresearch') return { Icon: NousResearchIcon, color: '#111827', label: 'Nous', name: 'Nous Research' };
+  if (vendor === 'liquid') return { Icon: LiquidIcon, color: '#0EA5E9', label: 'Liquid', name: 'Liquid AI' };
+  if (vendor === 'relace') return { Icon: RelaceIcon, color: '#111827', label: 'Relace', name: 'Relace' };
+  if (vendor === 'morph') return { Icon: MorphIcon, color: '#111827', label: 'Morph', name: 'Morph' };
+  if (vendor === 'groq') return { Icon: GroqIcon, color: '#F55036', label: 'Groq', name: 'Groq' };
+  if (vendor === 'volcengine') return { Icon: VolcengineIcon, color: '#1664FF', label: 'Volcengine', name: 'Volcengine' };
+  if (vendor === 'cloudflare') return { Icon: CloudflareIcon, color: '#F38020', label: 'Cloudflare', name: 'Cloudflare' };
+  if (vendor === 'workers-ai') return { Icon: WorkersAIIcon, color: '#F38020', label: 'Workers AI', name: 'Workers AI' };
+  if (vendor === 'huggingface') return { Icon: HuggingFaceIcon, color: '#FF9D00', label: 'HF', name: 'Hugging Face' };
+  if (vendor === 'inflection') return { Icon: InflectionIcon, color: '#111827', label: 'Inflection', name: 'Inflection' };
+  if (vendor === 'inception') return { Icon: InceptionIcon, color: '#111827', label: 'Inception', name: 'Inception' };
+  if (vendor === 'essentialai') return { Icon: EssentialAIIcon, color: '#111827', label: 'Essential', name: 'Essential AI' };
+  if (vendor === 'deepcogito') return { Icon: DeepCogitoIcon, color: '#111827', label: 'Cogito', name: 'Deep Cogito' };
+  if (vendor === 'kwaipilot') return { Icon: KwaipilotIcon, color: '#FF5F00', label: 'Kwai', name: 'Kwaipilot' };
+  if (vendor === 'stepfun') return { Icon: StepfunIcon, color: '#111827', label: 'Stepfun', name: 'Stepfun' };
+  if (vendor === 'upstage') return { Icon: UpstageIcon, color: '#111827', label: 'Upstage', name: 'Upstage' };
+  if (vendor === 'voyage') return { Icon: VoyageIcon, color: '#111827', label: 'Voyage', name: 'Voyage AI' };
+  if (vendor === 'baichuan') return { Icon: BaichuanIcon, color: '#1D4ED8', label: 'Baichuan', name: 'Baichuan' };
+  if (vendor === '01-ai' || vendor === 'zero-one') return { Icon: ZeroOneIcon, color: '#111827', label: '01.AI', name: '01.AI' };
+  if (vendor === 'yi') return { Icon: YiIcon, color: '#111827', label: 'Yi', name: 'Yi' };
+  if (vendor === 'aleph-alpha') return { Icon: AlephAlphaIcon, color: '#111827', label: 'Aleph', name: 'Aleph Alpha' };
+  if (vendor === 'yandex') return { Icon: YandexIcon, color: '#FC3F1D', label: 'Yandex', name: 'Yandex' };
+
+  return fallbackVendor;
 };
 
 const ModelAvatar = ({ modelId, size = 'normal', isDense = false }: { modelId: string, size?: 'small' | 'normal' | 'large', isDense?: boolean }) => {
-  const style = getVendorStyle(modelId);
+  const vendor = getVendorIconSpec(modelId);
+  const Icon = vendor.Icon;
   
-  let sizeClass = 'w-8 h-8 text-[10px] rounded-[8px]'; 
-  if (size === 'small') sizeClass = 'w-5 h-5 text-[8px] rounded-[5px]';
-  if (size === 'large') sizeClass = 'w-12 h-12 text-[12px] rounded-[12px]';
-  if (isDense && size === 'normal') sizeClass = 'w-6 h-6 text-[8px] rounded-[6px]';
+  let sizeClass = 'w-8 h-8 rounded-[9px]'; 
+  let iconSize = 19;
+  if (size === 'small') {
+    sizeClass = 'w-6 h-6 rounded-[7px]';
+    iconSize = 14;
+  }
+  if (size === 'large') {
+    sizeClass = 'w-12 h-12 rounded-[14px]';
+    iconSize = 29;
+  }
+  if (isDense && size === 'normal') {
+    sizeClass = 'w-6 h-6 rounded-[7px]';
+    iconSize = 14;
+  }
 
   return (
-    <div className={`${sizeClass} ${style.bg} ${style.text} flex items-center justify-center font-bold tracking-tight shadow-sm bg-gradient-to-br ${style.gradient} select-none overflow-hidden`}>
-      <span className="scale-90 truncate px-0.5">{style.label}</span>
+    <div
+      className={`${sizeClass} flex items-center justify-center bg-white border border-gray-200/70 shadow-sm select-none overflow-hidden`}
+      style={{ color: vendor.color }}
+      title={vendor.name}
+    >
+      {Icon ? (
+        <Icon size={iconSize} />
+      ) : (
+        <span className="text-[9px] font-bold tracking-tight text-gray-500 scale-90">{vendor.label}</span>
+      )}
     </div>
   );
 };
@@ -89,6 +207,7 @@ const ModelSelector = ({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const currentModel = models.find(m => m.id === currentModelId) || { id: currentModelId, name: currentModelId };
@@ -180,9 +299,16 @@ const ModelSelector = ({
     return finalGroups;
   }, [models, search, t, favorites]);
 
+  const manualModelId = search.trim();
+  const canUseCustomModel = manualModelId.length > 0 && !models.some(model => model.id === manualModelId);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideTrigger = dropdownRef.current?.contains(target);
+      const isInsidePanel = panelRef.current?.contains(target);
+
+      if (!isInsideTrigger && !isInsidePanel) {
         setIsOpen(false);
         setSearch(''); 
       }
@@ -194,6 +320,183 @@ const ModelSelector = ({
   useEffect(() => {
     if (isOpen && searchInputRef.current) searchInputRef.current.focus();
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+        setSearch('');
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleResize = () => {
+      setIsOpen(false);
+      setSearch('');
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [isOpen]);
+
+  const isMobileViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+  const desktopPickerStyle = (() => {
+    if (isMobileViewport || typeof window === 'undefined' || !dropdownRef.current) return undefined;
+
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const width = Math.min(390, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+    const maxHeight = Math.min(460, window.innerHeight - rect.bottom - 20);
+
+    return {
+      top: rect.bottom + 8,
+      left,
+      width,
+      maxHeight: Math.max(280, maxHeight),
+    };
+  })();
+
+  const renderModelPicker = (isMobileSheet: boolean) => (
+    <div
+      ref={panelRef}
+      style={isMobileSheet ? undefined : desktopPickerStyle}
+      className={isMobileSheet
+        ? "fixed inset-x-3 bottom-3 z-50 max-h-[78vh] bg-white/95 backdrop-blur-xl border border-gray-200/50 shadow-2xl rounded-2xl overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-3 duration-200 ring-1 ring-black/5"
+        : "fixed z-50 bg-white/95 backdrop-blur-xl border border-gray-200/50 shadow-2xl rounded-xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 origin-top-left ring-1 ring-black/5"
+      }
+    >
+      {isMobileSheet && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white/95">
+          <div>
+            <div className="text-[13px] font-semibold text-gray-900">{t.modelSheetTitle}</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">{displayName}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(false);
+              setSearch('');
+            }}
+            className="p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            title={t.close}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      <div className={`${isMobileSheet ? 'p-3' : 'p-2'} border-b border-gray-100 sticky top-0 z-20 bg-white/95 backdrop-blur`}>
+        <div className="relative">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder={t.searchModel}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`w-full pl-9 pr-3 bg-gray-100 border-none rounded-lg font-medium focus:ring-2 focus:ring-[#007AFF]/20 focus:bg-white transition-all outline-none placeholder-gray-400 ${isMobileSheet ? 'py-2 text-[13px]' : 'py-1.5 text-[12px]'}`}
+          />
+        </div>
+      </div>
+      <div className={`overflow-y-auto flex-1 space-y-3 model-list-scrollbar ${isMobileSheet ? 'p-2 pr-3' : 'p-1 pr-2'}`}>
+        {canUseCustomModel && (
+          <button
+            type="button"
+            onClick={() => {
+              onChange(manualModelId);
+              setIsOpen(false);
+              setSearch('');
+            }}
+            className={`w-full flex items-center gap-2 rounded-lg text-left transition-all text-gray-700 hover:bg-blue-50 hover:text-[#007AFF] border border-dashed border-gray-200 hover:border-[#007AFF]/30 ${isMobileSheet ? 'px-2.5 py-2' : 'px-2 py-1.5'}`}
+          >
+            <div className="w-6 h-6 rounded-md bg-gray-900 text-white flex items-center justify-center flex-shrink-0">
+              <Bot size={13} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-semibold">{t.useCustomModel}</div>
+              <div className="truncate text-[10px] text-gray-400">{manualModelId}</div>
+            </div>
+          </button>
+        )}
+        {groupedModels.length === 0 && !canUseCustomModel ? (
+            <div className="p-4 text-center text-xs text-gray-400">
+                {t.noModelFound}
+            </div>
+        ) : groupedModels.map((group: any) => {
+            const groupName = group[0] as string;
+            const groupModels = group[1] as OpenRouterModel[];
+            return (
+            <div key={groupName} className="relative">
+                <div className="px-2 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-md z-10 truncate border-b border-gray-50 flex items-center gap-1">
+                    {groupName === t.favorites && <Star size={10} className="fill-yellow-400 text-yellow-400" />}
+                    {groupName === t.freeModels && <Tag size={10} className="text-green-600" />}
+                    {groupName}
+                </div>
+                <div className="space-y-0.5 px-1 pt-1">
+                {groupModels.map(model => {
+                    const isSelected = currentModelId === model.id;
+                    const isFav = favorites.includes(model.id);
+
+                    return (
+                        <div
+                          key={`${groupName}-${model.id}`}
+                          className={`group/item w-full flex items-center gap-2 rounded-lg text-left transition-all relative overflow-hidden cursor-pointer ${isMobileSheet ? 'px-2.5 py-2' : 'px-2 py-1.5'} ${
+                            isSelected
+                            ? 'bg-[#007AFF] text-white shadow-sm'
+                            : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                        onClick={() => {
+                            onChange(model.id);
+                            setIsOpen(false);
+                            setSearch('');
+                        }}
+                        >
+                            <div className={`flex-shrink-0 transition-all ${isSelected ? 'scale-95' : ''}`}>
+                                <ModelAvatar modelId={model.id} size="small" />
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col justify-center h-8">
+                                <div className="truncate text-[12px] font-medium leading-tight">
+                                    {cleanModelName(model.name)}
+                                </div>
+                            </div>
+
+                            {onToggleFavorite && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onToggleFavorite(model.id);
+                                }}
+                                className={`p-1.5 rounded-full transition-all z-20 hover:bg-black/10 ${isFav ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100'}`}
+                              >
+                                <Star
+                                  size={12}
+                                  className={isFav ? "fill-yellow-400 text-yellow-400" : (isSelected ? "text-white/70" : "text-gray-300")}
+                                />
+                              </button>
+                            )}
+
+                            {isSelected && !onToggleFavorite && <Check size={12} className="text-white ml-1 flex-shrink-0" />}
+                        </div>
+                    );
+                })}
+                </div>
+            </div>
+            );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <div className="relative flex-1 group min-w-0" ref={dropdownRef}>
@@ -210,89 +513,23 @@ const ModelSelector = ({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-[280px] bg-white/95 backdrop-blur-xl border border-gray-200/50 shadow-2xl rounded-xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200 origin-top-left max-h-[400px] ring-1 ring-black/5">
-          <div className="p-2 border-b border-gray-100 sticky top-0 z-20 bg-white/95 backdrop-blur">
-            <div className="relative">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              <input 
-                ref={searchInputRef}
-                type="text" 
-                placeholder={t.searchModel}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-2 py-1.5 bg-gray-100 border-none rounded-lg text-[12px] font-medium focus:ring-2 focus:ring-[#007AFF]/20 focus:bg-white transition-all outline-none placeholder-gray-400"
+        createPortal(
+          <>
+            {isMobileViewport && (
+              <button
+                type="button"
+                aria-label={t.close}
+                onClick={() => {
+                  setIsOpen(false);
+                  setSearch('');
+                }}
+                className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
               />
-            </div>
-          </div>
-          <div className="overflow-y-auto flex-1 p-1 space-y-3 custom-scrollbar">
-            {groupedModels.length === 0 ? (
-                <div className="p-4 text-center text-xs text-gray-400">
-                    {t.noModelFound}
-                </div>
-            ) : groupedModels.map((group: any) => {
-                const groupName = group[0] as string;
-                const groupModels = group[1] as OpenRouterModel[];
-                return (
-                <div key={groupName} className="relative">
-                    <div className="px-2 py-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/95 backdrop-blur-md z-10 truncate border-b border-gray-50 flex items-center gap-1">
-                        {groupName === t.favorites && <Star size={10} className="fill-yellow-400 text-yellow-400" />}
-                        {groupName === t.freeModels && <Tag size={10} className="text-green-600" />}
-                        {groupName}
-                    </div>
-                    <div className="space-y-0.5 px-1 pt-1">
-                    {groupModels.map(model => {
-                        const isSelected = currentModelId === model.id;
-                        const isFav = favorites.includes(model.id);
-
-                        return (
-                            <div 
-                              key={`${groupName}-${model.id}`}
-                              className={`group/item w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all relative overflow-hidden cursor-pointer ${
-                                isSelected 
-                                ? 'bg-[#007AFF] text-white shadow-sm' 
-                                : 'hover:bg-gray-100 text-gray-700'
-                            }`}
-                            onClick={() => {
-                                onChange(model.id);
-                                setIsOpen(false);
-                                setSearch('');
-                            }}
-                            >
-                                <div className={`flex-shrink-0 transition-all ${isSelected ? 'scale-95' : ''}`}>
-                                    <ModelAvatar modelId={model.id} size="small" />
-                                </div>
-                                <div className="flex-1 min-w-0 flex flex-col justify-center h-8">
-                                    <div className="truncate text-[12px] font-medium leading-tight">
-                                        {cleanModelName(model.name)}
-                                    </div>
-                                    {/* Removed ID display line */}
-                                </div>
-                                
-                                {onToggleFavorite && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onToggleFavorite(model.id);
-                                    }}
-                                    className={`p-1.5 rounded-full transition-all z-20 hover:bg-black/10 ${isFav ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100'}`}
-                                  >
-                                    <Star 
-                                      size={12} 
-                                      className={isFav ? "fill-yellow-400 text-yellow-400" : (isSelected ? "text-white/70" : "text-gray-300")} 
-                                    />
-                                  </button>
-                                )}
-
-                                {isSelected && !onToggleFavorite && <Check size={12} className="text-white ml-1 flex-shrink-0" />}
-                            </div>
-                        );
-                    })}
-                    </div>
-                </div>
-                );
-            })}
-          </div>
-        </div>
+            )}
+            {renderModelPicker(isMobileViewport)}
+          </>,
+          document.body
+        )
       )}
     </div>
   );
@@ -377,6 +614,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onRegenerate,
   lang,
   isDense = false,
+  isApiConnected = true,
   favoriteModels = [],
   onToggleFavorite
 }) => {
@@ -392,7 +630,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const t = TRANSLATIONS[lang];
 
-  const modelsList = availableModels.length > 0 ? availableModels : DEFAULT_MODELS;
+  const modelsList = availableModels;
 
   useEffect(() => {
     if (!editingMessageId) {
@@ -532,13 +770,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       {/* Messages Area */}
       <div className={`flex-1 overflow-y-auto space-y-4 custom-scrollbar scroll-smooth ${isDense ? 'p-2' : 'p-4'}`}>
         {data.messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-gray-300 select-none animate-in fade-in duration-700">
-            <div className="mb-2 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+          <div className={`h-full flex flex-col items-center justify-center text-center select-none animate-in fade-in duration-700 ${isDense ? 'px-2' : 'px-6'}`}>
+            <div className="mb-3 opacity-80 transition-all duration-500">
                <ModelAvatar modelId={data.modelId} size="large" />
             </div>
-            <p className="text-[10px] font-medium opacity-50 tracking-wide">{t.selectModel}</p>
+            <p className={`font-semibold text-gray-700 ${isDense ? 'text-[11px]' : 'text-[14px]'}`}>{t.emptyTitle}</p>
+            {!isApiConnected && (
+              <p className={`mt-1 text-gray-400 leading-relaxed ${isDense ? 'text-[9px]' : 'text-[12px]'}`}>{t.connectApiHint}</p>
+            )}
             {data.systemPrompt && (
-              <div className="mt-2 max-w-[80%] px-2 py-0.5 bg-blue-50 text-blue-600/60 text-[9px] rounded-full border border-blue-100 truncate flex items-center gap-1">
+              <div className="mt-3 max-w-[80%] px-2 py-0.5 bg-blue-50 text-blue-600/70 text-[9px] rounded-full border border-blue-100 truncate flex items-center gap-1">
                 <Bot size={9} />
                 <span className="truncate">{data.systemPrompt}</span>
               </div>

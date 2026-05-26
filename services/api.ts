@@ -27,6 +27,21 @@ export const fetchModels = async (apiKey: string, baseUrl: string): Promise<Open
   }
 };
 
+const parseStreamData = (line: string) => {
+  if (!line.startsWith("data:")) return null;
+
+  const dataStr = line.slice(5).trimStart();
+  if (!dataStr) return null;
+  if (dataStr === "[DONE]") return { done: true };
+
+  const data = JSON.parse(dataStr);
+  return {
+    done: false,
+    content: data.choices?.[0]?.delta?.content,
+    usage: data.usage as TokenUsage | undefined,
+  };
+};
+
 export const streamChatCompletion = async (
   apiKey: string,
   baseUrl: string,
@@ -111,37 +126,51 @@ export const streamChatCompletion = async (
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+
+    const processLine = (line: string): boolean => {
+      if (!line.startsWith("data:")) return false;
+
+      try {
+        const data = parseStreamData(line);
+        if (!data) return false;
+        if (data.done) return true;
+
+        if (typeof data.content === "string") {
+          onChunk(data.content);
+        }
+
+        if (data.usage) {
+          onMetadata(data.usage);
+        }
+      } catch (e) {
+        console.warn("Error parsing stream chunk", e);
+      }
+
+      return false;
+    };
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      const lines = chunk.split("\n");
-
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const dataStr = line.slice(6);
-          if (dataStr === "[DONE]") return;
-
-          try {
-            const data = JSON.parse(dataStr);
-            
-            // Check for content
-            const content = data.choices?.[0]?.delta?.content;
-            if (content) {
-              onChunk(content);
-            }
-
-            // Check for usage
-            if (data.usage) {
-               onMetadata(data.usage as TokenUsage);
-            }
-
-          } catch (e) {
-            console.warn("Error parsing stream chunk", e);
+      if (done) {
+        buffer += decoder.decode();
+        if (buffer.trim()) {
+          const lines = buffer.split(/\r?\n/);
+          for (const line of lines) {
+            if (processLine(line)) return;
           }
         }
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex = buffer.indexOf("\n");
+      while (newlineIndex !== -1) {
+        const line = buffer.slice(0, newlineIndex).replace(/\r$/, "");
+        buffer = buffer.slice(newlineIndex + 1);
+        if (processLine(line)) return;
+        newlineIndex = buffer.indexOf("\n");
       }
     }
   } catch (error) {
